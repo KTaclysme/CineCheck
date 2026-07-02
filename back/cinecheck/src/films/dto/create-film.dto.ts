@@ -1,7 +1,7 @@
 export class CreateFilmDto {
+    id: number
     tconst: string
-    personalRating?: number
+    personalrating?: number
     watched?: boolean
-    toWatch?: boolean
     favorite?: boolean
 }

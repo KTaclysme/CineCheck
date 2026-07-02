@@ -17,9 +17,9 @@ export class FilmsController {
     return this.filmsService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.filmsService.findOne(+id);
+  @Get(':tconst')
+  findOne(@Param('tconst') tconst: string) {
+    return this.filmsService.findOne(tconst);
   }
 
   @Patch(':id')
