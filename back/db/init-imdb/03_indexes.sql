@@ -1,3 +1,4 @@
+CREATE INDEX IF NOT EXISTS idx_pk_imdb ON imdb_transform(pk_imdb);
 CREATE INDEX IF NOT EXISTS idx_tconst ON imdb_transform(tconst);
 CREATE INDEX IF NOT EXISTS idx_nconst ON imdb_transform(nconst);
 CREATE INDEX IF NOT EXISTS idx_primarytitle ON imdb_transform(primarytitle);
