@@ -1,4 +1,4 @@
-import { User } from 'src/users/entities/user.entity';
+import { User } from '../../users/entities/user.entity';
 import { Entity, Column, PrimaryColumn, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
 
 @Entity({ name: 'imdb_transform' })
