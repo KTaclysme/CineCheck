@@ -9,7 +9,7 @@ export default function LoginPage() {
   const [pass, setpass] = useState('');
   const router = useRouter(); 
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     try {
       const response = await axios.post('http://localhost:3000/auth/login', { email, pass });
@@ -28,7 +28,8 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-100">
       <form onSubmit={handleSubmit} className="p-8 bg-white rounded shadow-md w-80">
-        <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">CineCheck</h2>
+        <h1 className="text-3xl font-bold mb-6 text-center text-gray-800">CineCheck</h1>
+        <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Connexion</h2>
         <input
           type="text"
           placeholder="E-mail"
@@ -48,6 +49,7 @@ export default function LoginPage() {
         <button type="submit" className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">
           Se connecter
         </button>
+        <a href='/signup' className='text-xs text-black-600 hover:text-gray-500'>Pas de compte ?</a>
       </form>
     </div>
   );
