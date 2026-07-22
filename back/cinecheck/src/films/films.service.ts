@@ -31,17 +31,22 @@ export class FilmsService {
     return this.userRatingsRepo.save(userFilm);
   }
 
-  async findAll(page, limit) {
-    const [data, total] = await this.moviesRepo.findAndCount({
-      skip: (page - 1) * limit,
+  async findAll(page: number = 1, limit: number = 20) {
+    const skip = (page - 1) * limit;
+
+    const data = await this.moviesRepo.find({
+      skip,
       take: limit,
+      order: {
+        votes: 'DESC',
+      },
     });
 
     return {
       data,
-      total,
       page,
-      lastPage: Math.ceil(total / limit),
+      limit,
+      hasMore: data.length === limit, 
     };
   }
   async findOne(id: string) {
@@ -57,18 +62,18 @@ export class FilmsService {
   }
 
   async update(id: number, updateFilmDto: UpdateFilmDto) {
-  await this.userRatingsRepo.update(id, updateFilmDto);
+    await this.userRatingsRepo.update(id, updateFilmDto);
   
-  return this.userRatingsRepo.findOne({ where: { id } });
+    return this.userRatingsRepo.findOne({ where: { id } });
   }
 
   async remove(id: number) {
-  const result = await this.userRatingsRepo.delete(id);
-  
-  if (result.affected === 0) {
-    throw new Error(`Film avec l'ID ${id} introuvable`);
-  }
-  
-  return {deleted: true}
+    const result = await this.userRatingsRepo.delete(id);
+    
+    if (result.affected === 0) {
+      throw new Error(`Film avec l'ID ${id} introuvable`);
+    }
+    
+    return {deleted: true}
   }
 }

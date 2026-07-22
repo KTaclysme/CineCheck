@@ -38,8 +38,8 @@ export default function Home() {
       
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 w-full max-w-5xl">
         {films.map((film: any) => (
-          <div key={film.pk_imdb} className="p-4 border rounded-lg bg-white dark:bg-zinc-900 shadow">
-            <h2 className="font-semibold text-lg">{film.primarytitle}</h2>
+          <div key={film.id} className="p-4 border rounded-lg bg-white dark:bg-zinc-900 shadow">
+            <h2 className="font-semibold text-lg">{film.title}</h2>
             <p className="text-sm text-gray-500">{film.startyear}</p>
             <p className="text-sm text-gray-500">{film.genres}</p>
           </div>

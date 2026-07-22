@@ -15,7 +15,7 @@ export class Movies {
   title: string;
 
   @Column({ nullable: true })
-  startyear: number;
+  year: number;
 
   @Column({ nullable: true })
   genres: string;
