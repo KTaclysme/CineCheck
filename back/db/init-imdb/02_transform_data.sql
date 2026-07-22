@@ -1,25 +1,21 @@
-CREATE TABLE imdb_transform AS
+CREATE TABLE movies AS
 SELECT 
-    title_principals.tconst || '_' || title_principals.nconst as pk_imdb,
-    title_principals.tconst,
-    title_principals.nconst,
-    name_basics.primaryname,
-    name_basics.birthyear,
-    name_basics.deathyear,
-    title_principals.category,
+    title_basics.tconst AS id,
+    title_basics.primarytitle AS title,
+    title_basics.startyear AS year,
     title_basics.genres,
-    title_basics.primarytitle,
-    title_basics.startyear,
-    title_ratings.averagerating,
-    title_ratings.numvotes
-FROM name_basics
-INNER JOIN title_principals
-    ON title_principals.nconst = name_basics.nconst
-INNER JOIN title_basics
-    ON title_principals.tconst = title_basics.tconst
-INNER JOIN title_ratings
-    ON title_basics.tconst = title_ratings.tconst
+    title_ratings.averagerating AS rating,
+    title_ratings.numvotes AS votes
+FROM title_basics
+INNER JOIN title_ratings ON title_basics.tconst = title_ratings.tconst
 WHERE title_basics.titletype = 'movie'
-    AND title_basics.isadult = false
-    AND title_ratings.averagerating IS NOT NULL
-    AND title_principals.category IN ('actor','actress','director','composer');
+  AND title_basics.isadult = false;
+
+CREATE TABLE movie_cast AS
+SELECT 
+    tconst || '_' || nconst || '_' || category AS id,
+    tconst AS movie_id,
+    nconst AS person_id,
+    category AS job
+FROM title_principals
+WHERE category IN ('actor', 'actress', 'director', 'composer');
