@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { Cinecheck, Film } from '../films/entities/film.entity';
-import { User } from '../users/entities/user.entity';
+import { Castings, Movies, UserPersonRatings, UserRatings } from '../films/entities/film.entity';
+import { Users } from '../users/entities/user.entity';
 
 @Module({
   imports: [
@@ -16,7 +16,7 @@ import { User } from '../users/entities/user.entity';
         username: configService.get('IMDB_USER'),
         password: configService.get('IMDB_PASSWORD'),
         database: configService.get('IMDB_DB'),
-        entities: [Film],
+        entities: [Movies, Castings],
       }),
       inject: [ConfigService],
     }),
@@ -30,7 +30,7 @@ import { User } from '../users/entities/user.entity';
         username: configService.get('CINECHECK_USER'),
         password: configService.get('CINECHECK_PASSWORD'),
         database: configService.get('CINECHECK_DB'),
-        entities: [Cinecheck, User],
+        entities: [UserRatings, UserPersonRatings, Users],
       }),
       inject: [ConfigService],
     }),

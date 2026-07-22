@@ -3,32 +3,32 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User } from './entities/user.entity';
+import { Users } from './entities/user.entity';
 
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectRepository(User, 'cinecheck') private userRepo: Repository<User>
+    @InjectRepository(Users, 'user_rating') private usersRepo: Repository<Users>
   ) {}
 
   async create(createUserDto: CreateUserDto) {
-    const user = await this.userRepo.create(createUserDto)
-    const existingUser = await this.userRepo.findOne({
+    const user = await this.usersRepo.create(createUserDto)
+    const existingUser = await this.usersRepo.findOne({
       where: { email: createUserDto.email}
     });
     if (existingUser) {
       throw new Error('Adresse mail déjà existant')
     }
-    return await this.userRepo.save(user);
+    return await this.usersRepo.save(user);
   }
 
   async findAll() {
-    const users = await this.userRepo.find()
+    const users = await this.usersRepo.find()
     return users;
   }
 
   async findOne(email : string) {
-    const user = await this.userRepo.findOne({
+    const user = await this.usersRepo.findOne({
       where: { email }
     })
     if (!user) {
@@ -39,19 +39,19 @@ export class UsersService {
   }
 
   async update(id: number, updateUserDto: UpdateUserDto) {
-  const result = await this.userRepo.update(id, updateUserDto);
+  const result = await this.usersRepo.update(id, updateUserDto);
 
   if (result.affected === 0) {
     throw new NotFoundException('Utilisateur inexistant');
   }
 
-  return await this.userRepo.findOne({
+  return await this.usersRepo.findOne({
     where: { id }
   });
 }
 
   async remove(id: number) {
-    const user = await this.userRepo.delete(id)
+    const user = await this.usersRepo.delete(id)
     return user;
   }
 }

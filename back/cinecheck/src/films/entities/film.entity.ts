@@ -1,50 +1,67 @@
-import { User } from '../../users/entities/user.entity';
+import { Users } from '../../users/entities/user.entity';
 import { Entity, Column, PrimaryColumn, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
 
-@Entity({ name: 'imdb_transform' })
-export class Film {
+/*
+====================================================================================================================
+                                                        IMDB                                                        
+====================================================================================================================
+*/
+@Entity({ name: 'movies' })
+export class Movies {
   @PrimaryColumn()
-  pk_imdb: string;
+  id: string;
   
   @Column()
-  tconst: string;
-
-  @Column()
-  nconst: string;
-
-  @Column()
-  primaryname: string;
-
-  @Column()
-  category: string;
-
-  @Column()
-  genres: string;
-
-  @Column()
-  primarytitle: string;
+  title: string;
 
   @Column()
   startyear: number;
 
   @Column()
-  numvotes: number;
+  genres: string;
 
   @Column()
-  averagerating: number;
+  rating: number;
+
+  @Column()
+  votes: number;
 }
 
+@Entity({ name: 'movie_cast' })
+export class Castings {
+  @PrimaryColumn()
+  id: string;
+  
+  @Column()
+  movie_id: string;
+
+  @Column()
+  person_id: number;
+
+  @Column()
+  genres: string;
+
+  @Column()
+  job: number;
+}
+
+/*
+========================================================================================================================
+                                                        CINECHECK                                                       
+========================================================================================================================
+*/
+
 @Entity({ name: 'user_rating' })
-export class Cinecheck {
+export class UserRatings {
   @PrimaryGeneratedColumn()
   id: number;
   
   @Column()
   userid: number;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => Users)
   @JoinColumn({ name: 'userid' })
-  user: User;
+  user: Users;
 
   @Column()
   tconst: string;
@@ -54,6 +71,28 @@ export class Cinecheck {
 
   @Column({ default: false })
   watched: boolean;
+
+  @Column({ default: false })
+  favorite: boolean;
+}
+
+@Entity({ name: 'user_person_rating' })
+export class UserPersonRatings {
+  @PrimaryGeneratedColumn()
+  id: number;
+  
+  @Column()
+  userid: number;
+
+  @ManyToOne(() => Users)
+  @JoinColumn({ name: 'userid' })
+  user: Users;
+
+  @Column()
+  nconst: string;
+
+  @Column({ nullable: true })
+  personalrating: number;
 
   @Column({ default: false })
   favorite: boolean;

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, DefaultValuePipe, ParseIntPipe } from '@nestjs/common';
 import { FilmsService } from './films.service';
 import { CreateFilmDto } from './dto/create-film.dto';
 import { UpdateFilmDto } from './dto/update-film.dto';
@@ -13,13 +13,13 @@ export class FilmsController {
   }
 
   @Get()
-  findAll() {
-    return this.filmsService.findAll();
+  findAll(@Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number, @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,) {
+    return this.filmsService.findAll(page, limit);
   }
 
-  @Get(':tconst')
-  findOne(@Param('tconst') tconst: string) {
-    return this.filmsService.findOne(tconst);
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.filmsService.findOne(id);
   }
 
   @Patch(':id')
