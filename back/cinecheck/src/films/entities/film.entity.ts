@@ -3,27 +3,27 @@ import { Entity, Column, PrimaryColumn, PrimaryGeneratedColumn, ManyToOne, JoinC
 
 /*
 ====================================================================================================================
-                                                        IMDB                                                        
+                                                 IMDB DB
 ====================================================================================================================
 */
 @Entity({ name: 'movies' })
 export class Movies {
   @PrimaryColumn()
   id: string;
-  
+
   @Column()
   title: string;
 
-  @Column()
+  @Column({ nullable: true })
   startyear: number;
 
-  @Column()
+  @Column({ nullable: true })
   genres: string;
 
-  @Column()
+  @Column({ type: 'float', nullable: true })
   rating: number;
 
-  @Column()
+  @Column({ nullable: true })
   votes: number;
 }
 
@@ -31,31 +31,27 @@ export class Movies {
 export class Castings {
   @PrimaryColumn()
   id: string;
-  
+
   @Column()
   movie_id: string;
 
   @Column()
-  person_id: number;
+  person_id: string; 
 
   @Column()
-  genres: string;
-
-  @Column()
-  job: number;
+  job: string; 
 }
 
 /*
 ========================================================================================================================
-                                                        CINECHECK                                                       
+                                               CINECHECK DB
 ========================================================================================================================
 */
-
 @Entity({ name: 'user_rating' })
 export class UserRatings {
   @PrimaryGeneratedColumn()
   id: number;
-  
+
   @Column()
   userid: number;
 
@@ -66,7 +62,7 @@ export class UserRatings {
   @Column()
   tconst: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'float', nullable: true })
   personalrating: number;
 
   @Column({ default: false })
@@ -80,7 +76,7 @@ export class UserRatings {
 export class UserPersonRatings {
   @PrimaryGeneratedColumn()
   id: number;
-  
+
   @Column()
   userid: number;
 
@@ -91,7 +87,7 @@ export class UserPersonRatings {
   @Column()
   nconst: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'float', nullable: true })
   personalrating: number;
 
   @Column({ default: false })

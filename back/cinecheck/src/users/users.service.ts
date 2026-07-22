@@ -8,7 +8,7 @@ import { Users } from './entities/user.entity';
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectRepository(Users, 'user_rating') private usersRepo: Repository<Users>
+    @InjectRepository(Users, 'cinecheck') private usersRepo: Repository<Users>
   ) {}
 
   async create(createUserDto: CreateUserDto) {

@@ -8,8 +8,8 @@ import { Repository } from 'typeorm';
 @Injectable()
 export class FilmsService {
   constructor(
-    @InjectRepository(Movies, 'movies') private moviesRepo: Repository<Movies>,
-    @InjectRepository(UserRatings, 'user_rating') private userRatingsRepo: Repository<UserRatings>
+    @InjectRepository(Movies, 'imdb') private moviesRepo: Repository<Movies>,
+    @InjectRepository(UserRatings, 'cinecheck') private userRatingsRepo: Repository<UserRatings>
   ) {}
 
   async create(createFilmDto: CreateFilmDto) {
