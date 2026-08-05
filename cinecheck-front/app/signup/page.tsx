@@ -1,6 +1,7 @@
 'use client';
 
 import axios from "axios";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -9,7 +10,7 @@ export default function SignUpPage() {
     const [pword, setPassword] = useState('');
     const router = useRouter();
 
-    const handleSubmit = async (e: React.SubmitEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
         await axios.post('http://localhost:3000/users', { email, pword });
@@ -36,7 +37,7 @@ export default function SignUpPage() {
                   required 
                 />
                 <input
-                  type="Password"
+                  type="password"
                   placeholder="Mot de passe"
                   value={pword}
                   onChange={(e) => setPassword(e.target.value)}
@@ -44,8 +45,14 @@ export default function SignUpPage() {
                   required 
                 />
                 <button type="submit" className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">
-                  S'incrire
+                  S&apos;inscrire
                 </button>
+                <p className="mt-4 text-center text-sm text-gray-600">
+                  Déjà un compte ?{' '}
+                  <Link href="/login" className="text-blue-500 hover:underline">
+                    Se connecter
+                  </Link>
+                </p>
             </form>
         </div>
     )
