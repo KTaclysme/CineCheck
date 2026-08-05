@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateFilmDto } from './dto/create-film.dto';
 import { UpdateFilmDto } from './dto/update-film.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -18,10 +18,11 @@ export class FilmsService {
     });
 
     if(!film) {
-      throw new Error("Film introuvable"); 
+      throw new NotFoundException("Film introuvable"); 
     }
 
     const userFilm = this.userRatingsRepo.create({
+      userid: createFilmDto.id,
       tconst: createFilmDto.tconst,
       personalrating: createFilmDto.personalrating ?? null,
       watched: createFilmDto.watched ?? false,
@@ -49,16 +50,74 @@ export class FilmsService {
       hasMore: data.length === limit, 
     };
   }
+
+  async search(query: string, limit: number = 10) {
+    if (!query.trim()) {
+      return [];
+    }
+
+    return this.moviesRepo
+      .createQueryBuilder('movie')
+      .where('movie.title ILIKE :query', { query: `%${query.trim()}%` })
+      .orderBy('movie.votes', 'DESC')
+      .take(limit)
+      .getMany();
+  }
+
   async findOne(id: string) {
     const film = await this.moviesRepo.findOne({
       where: { id }
     });
 
     if (!film) {
-      throw new Error("Film introuvable");
+      throw new NotFoundException("Film introuvable");
     }
 
     return film;
+  }
+
+  async rate(userId: number, tconst: string, personalrating: number) {
+    const film = await this.moviesRepo.findOne({ where: { id: tconst } });
+    if (!film) {
+      throw new NotFoundException('Film introuvable');
+    }
+
+    let rating = await this.userRatingsRepo.findOne({
+      where: { userid: userId, tconst },
+    });
+
+    if (rating) {
+      rating.personrating = personalrating;
+      rating.watched = true;
+    } else {
+      rating = this.userRatingsRepo.create({
+        userid: userId,
+        tconst,
+        personalrating,
+        watched: true,
+        favorite: false,
+      });
+    }
+
+    return this.userRatingsRepo.save(rating);
+  }
+
+  async getUserRatings(userId: number) {
+    const ratings = await this.userRatingsRepo.find({
+      where: { userid: userId },
+      order: { id: 'DESC' },
+    });
+
+    const results = await Promise.all(
+      ratings.map(async (rating) => {
+        const movie = await this.moviesRepo.findOne({
+          where: { id: rating.tconst },
+        });
+        return { ...rating, movie };
+      }),
+    );
+
+    return results.filter((entry) => entry.movie);
   }
 
   async update(id: number, updateFilmDto: UpdateFilmDto) {
@@ -71,7 +130,7 @@ export class FilmsService {
     const result = await this.userRatingsRepo.delete(id);
     
     if (result.affected === 0) {
-      throw new Error(`Film avec l'ID ${id} introuvable`);
+      throw new NotFoundException(`Film avec l'ID ${id} introuvable`);
     }
     
     return {deleted: true}
