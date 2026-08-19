@@ -34,7 +34,7 @@ export class AuthController {
         }
       );
       
-      return response.json({ message: 'Connexion réussie' });
+      return { message: 'Connexion réussie' };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
       

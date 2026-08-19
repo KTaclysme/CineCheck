@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { useRouter } from 'next/navigation';
 
 type Film = {
   id: string;
@@ -16,7 +15,7 @@ type Film = {
 };
 
 type User = {
-  id?: string;
+  id?: number;
   username?: string;
   email?: string;
 };
@@ -28,23 +27,15 @@ function RatingStars({
   rating: number | null;
   onChange?: (rating: number) => void;
 }) {
-  const handleRating = (newRating: number) => {
-    if (onChange) {
-      onChange(newRating);
-    }
-  };
-
   return (
     <div className="flex items-center gap-1">
       {[1, 2, 3, 4, 5].map((star) => (
         <button
           key={star}
-          onClick={() => handleRating(star)}
+          onClick={() => onChange?.(star)}
           className={`p-1 rounded transition-colors ${
-            rating
-              ? rating >= star
-                ? 'text-yellow-400'
-                : 'text-gray-300 dark:text-zinc-600'
+            rating && rating >= star
+              ? 'text-yellow-400'
               : 'text-gray-300 dark:text-zinc-600'
           }`}
           title={`Note ${star}/5`}
@@ -54,9 +45,7 @@ function RatingStars({
             viewBox="0 0 24 24"
             fill={rating && star <= rating ? 'currentColor' : 'none'}
             stroke="currentColor"
-            className={`w-5 h-5 ${
-              rating && star <= rating ? 'stroke-yellow-400' : ''
-            }`}
+            className="w-5 h-5"
           >
             <path
               strokeLinecap="round"
@@ -77,84 +66,83 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [savingRating, setSavingRating] = useState(false);
 
-  const router = useRouter();
-
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const fetchProfile = async () => {
+      try {
+        // 1. Récupérer l'utilisateur connecté
+        const userResponse = await axios.get(
+          'http://localhost:3000/auth/profile',
+          {
+            withCredentials: true,
+          }
+        );
 
-    if (!token) {
-      router.push('/login');
-      return;
-    }
+        const currentUser: User = userResponse.data;
 
-    axios
-      .get('http://localhost:3000/auth/profile', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      .then((response) => {
-        setUser(response.data);
+        setUser(currentUser);
 
-        return Promise.all([
-          axios.get('http://localhost:3000/films'),
-          axios.get('http://localhost:3000/films/my-ratings', {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }),
-        ]);
-      })
-      .then(([filmsResponse, ratingsResponse]) => {
-        const allFilms: Film[] = filmsResponse.data.data.map(
-          (film: Film) => ({
-            id: film.id,
-            title: film.title,
-            year: film.year,
-            genres: film.genres,
-            rating: film.rating,
-            votes: film.votes,
+        if (!currentUser.id) {
+          throw new Error('ID utilisateur introuvable');
+        }
+
+        // 2. Récupérer tous les films
+        const filmsResponse = await axios.get(
+          'http://localhost:3000/films'
+        );
+
+        const allFilms: Film[] = filmsResponse.data.data;
+
+        // 3. Pour chaque film, récupérer la note de l'utilisateur
+        const filmsWithRatings = await Promise.all(
+          allFilms.map(async (film) => {
+            try {
+              const ratingResponse = await axios.get(
+                `http://localhost:3000/films/${film.id}/user-rating`,
+                {
+                  params: {
+                    userId: currentUser.id,
+                  },
+                  withCredentials: true,
+                }
+              );
+
+              const ratingData = ratingResponse.data;
+
+              return {
+                ...film,
+                myRating: ratingData.hasRating
+                  ? ratingData.personalrating
+                  : null,
+                watchedByMe: ratingData.hasRating,
+              };
+            } catch (err) {
+              console.error(
+                `Erreur pour le film ${film.id}:`,
+                err
+              );
+
+              return {
+                ...film,
+                myRating: null,
+                watchedByMe: false,
+              };
+            }
           })
         );
 
-        const userRatings = ratingsResponse.data || {};
-
-        setMyFilms(
-          allFilms.map((film) => ({
-            ...film,
-            myRating:
-              userRatings[film.id]?.personalrating || null,
-            watchedByMe: !!userRatings[film.id],
-          }))
+        setMyFilms(filmsWithRatings);
+      } catch (err) {
+        console.error(
+          'Erreur lors de la récupération du profil:',
+          err
         );
-      })
-      .catch((err) => {
-        console.log('Aucune notation trouvée');
-
-        console.error(err);
-
-        setMyFilms((prev) =>
-          prev.length > 0
-            ? prev
-            : []
-        );
-      })
-      .finally(() => {
+      } finally {
         setLoading(false);
-      });
-  }, [router]);
+      }
+    };
 
-  if (loading) {
-    return (
-      <div className="p-8 text-black">
-        Chargement du profil...
-      </div>
-    );
-  }
-
-  if (!user) {
-    return null;
-  }
+    fetchProfile();
+  }, []);
 
   const handleSaveRating = async (
     tconst: string,
@@ -167,13 +155,11 @@ export default function ProfilePage() {
         'http://localhost:3000/films/rate',
         {
           tconst,
-          rating,
+          personalrating: rating,
           watched: true,
         },
         {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
+          withCredentials: true,
         }
       );
 
@@ -188,7 +174,6 @@ export default function ProfilePage() {
             : film
         )
       );
-
     } catch (err) {
       console.error(
         'Erreur lors de la sauvegarde de la note:',
@@ -200,6 +185,36 @@ export default function ProfilePage() {
       setSavingRating(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="p-8 text-black">
+        Chargement du profil...
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="p-8 text-black">
+        Impossible de récupérer votre profil.
+      </div>
+    );
+  }
+
+  const ratedFilms = myFilms.filter(
+    (film) => film.myRating !== null
+  );
+
+  const averageRating =
+    ratedFilms.length > 0
+      ? (
+          ratedFilms.reduce(
+            (sum, film) => sum + (film.myRating || 0),
+            0
+          ) / ratedFilms.length
+        ).toFixed(1)
+      : '--';
 
   return (
     <div className="p-8 bg-white min-h-screen text-black">
@@ -215,11 +230,7 @@ export default function ProfilePage() {
           </p>
 
           <p className="text-2xl font-bold">
-            {
-              myFilms.filter(
-                (film) => film.myRating !== null
-              ).length
-            }
+            {ratedFilms.length}
           </p>
         </div>
 
@@ -229,37 +240,10 @@ export default function ProfilePage() {
           </p>
 
           <p className="text-2xl font-bold text-yellow-600">
-            {(() => {
-              const ratings = myFilms.filter(
-                (film) => film.myRating !== null
-              );
-
-              if (ratings.length === 0) {
-                return '--';
-              }
-
-              const avg =
-                ratings.reduce(
-                  (sum, film) =>
-                    sum + (film.myRating || 0),
-                  0
-                ) / ratings.length;
-
-              return avg.toFixed(1);
-            })()}
+            {averageRating}
           </p>
         </div>
       </div>
-
-      <button
-        onClick={() => {
-          localStorage.removeItem('token');
-          router.push('/login');
-        }}
-        className="mt-4 bg-red-500 text-white p-2 rounded hover:bg-red-600"
-      >
-        Déconnexion
-      </button>
 
       {/* Liste des films */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
@@ -270,23 +254,20 @@ export default function ProfilePage() {
               !film.myRating ? 'opacity-60' : ''
             }`}
           >
-            {/* Titre */}
             <h2 className="font-semibold text-base mb-1 line-clamp-2">
               {film.title}
             </h2>
 
-            {/* Année et genres */}
             <div className="flex gap-2 text-xs text-gray-500 mb-3">
-              <span>{film.year || 'N/A'}</span>
+              <span>
+                {film.year || 'N/A'}
+              </span>
 
               <span>
-                {film.genres
-                  ? film.genres
-                  : 'Inconnu'}
+                {film.genres || 'Inconnu'}
               </span>
             </div>
 
-            {/* Votre notation */}
             <div className="mt-2 pt-2 border-t border-gray-100 dark:border-zinc-800">
               {!film.myRating ? (
                 <div className="flex items-center justify-between">
@@ -297,71 +278,61 @@ export default function ProfilePage() {
                   <RatingStars
                     rating={null}
                     onChange={(rating) =>
-                      handleSaveRating(
-                        film.id,
-                        rating
-                      )
+                      handleSaveRating(film.id, rating)
                     }
                   />
                 </div>
               ) : (
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-500 dark:text-zinc-400">
-                      Vos notes:
-                    </span>
+                <div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-500 dark:text-zinc-400">
+                        Votre note:
+                      </span>
 
-                    <RatingStars
-                      rating={film.myRating}
-                    />
+                      <RatingStars
+                        rating={film.myRating}
+                      />
+                    </div>
+
+                    {film.rating && (
+                      <span
+                        className={`text-sm font-bold ${
+                          film.rating >= 8
+                            ? 'text-green-600'
+                            : film.rating >= 7
+                            ? 'text-blue-600'
+                            : 'text-red-600'
+                        }`}
+                      >
+                        IMDb: {film.rating.toFixed(1)}/10
+                      </span>
+                    )}
                   </div>
 
-                  {/* Note IMDb */}
-                  {film.rating && (
-                    <span
-                      className={`text-sm font-bold ${
-                        film.rating >= 8
-                          ? 'text-green-600'
-                          : film.rating >= 7
-                          ? 'text-blue-600'
-                          : 'text-red-600'
-                      }`}
-                    >
-                      IMDb:{' '}
-                      {film.rating.toFixed(1)}
-                      /10
-                    </span>
-                  )}
+                  <button
+                    onClick={() =>
+                      handleSaveRating(film.id, 0)
+                    }
+                    disabled={savingRating}
+                    className="mt-2 text-xs text-red-500 hover:text-red-700 underline"
+                  >
+                    Supprimer cette note
+                  </button>
                 </div>
               )}
             </div>
-
-            {/* Bouton supprimer notation */}
-            {film.myRating && (
-              <button
-                onClick={() =>
-                  handleSaveRating(
-                    film.id,
-                    0
-                  )
-                }
-                className="mt-2 text-xs text-red-500 hover:text-red-700 underline"
-              >
-                Supprimer cette note
-              </button>
-            )}
           </div>
         ))}
       </div>
 
-      {/* Message si pas de films notés */}
       {myFilms.length === 0 && (
         <div className="text-center py-12 text-gray-500">
           <p>Aucun film pour le moment.</p>
 
           <p className="text-sm mt-2">
-            Allez sur la page d'accueil pour
-            découvrir des films et les noter !
+            Allez sur la page d'accueil pour découvrir
+            des films et les noter !
           </p>
         </div>
       )}

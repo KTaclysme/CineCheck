@@ -13,11 +13,13 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://localhost:3000/auth/login', {
+      await axios.post('http://localhost:3000/auth/login', {
         email,
         pword,
+      },
+      {
+        withCredentials : true
       });
-      localStorage.setItem('token', response.data.access_token);
       router.push('/profile');
     } catch (error) {
       console.error(error);
