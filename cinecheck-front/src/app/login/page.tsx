@@ -1,32 +1,27 @@
 'use client';
 
-import axios from 'axios';
+import { useAuth } from '@/src/components/AuthProvider';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import type { FormEvent } from 'react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [pword, setPassword] = useState('');
   const router = useRouter();
+  const { signIn } = useAuth();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await axios.post('http://localhost:3000/auth/login', {
-        email,
-        pword,
-      },
-      {
-        withCredentials : true
-      });
-      router.push('/profile');
-    } catch (error) {
-      console.error(error);
-      alert('Email ou mot de passe incorrect');
-    }
-  };
-
+  const handleSubmit = async (e: Parameters<NonNullable<React.ComponentProps<'form'>['onSubmit']>>[0]) => {
+  e.preventDefault();
+  try {
+    await signIn(email, pword);
+    router.push('/profile');
+  } catch (error) {
+    console.error('Erreur de connexion :', error);
+    alert('Connexion impossible. Vérifie tes identifiants et réessaie.');
+  }
+};
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-100">
       <form

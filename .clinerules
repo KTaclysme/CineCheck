@@ -1,0 +1,76 @@
+# CineCheck — Project Rules
+
+Speak French 
+
+## Project
+
+CineCheck is a platform for rating and reviewing movies, actors, directors,
+composers, and other cinema-related entities.
+
+The objective is to make the project fully functional and deployable.
+
+## Stack
+
+- Frontend: Next.js, React, TypeScript, Tailwind CSS
+- Backend: NestJS
+- Database: PostgreSQL
+- Infrastructure: Docker
+- Package manager / commands: inspect package.json and existing Docker configuration
+  before suggesting commands.
+
+## Architecture
+
+The project uses two separate databases:
+
+1. IMDb database
+   - Contains IMDb-related data.
+   - Primarily consumed by the frontend.
+   - It is not the application's source of truth for users or user-generated data.
+
+2. CineCheck database
+   - Application database.
+   - Contains users, user ratings, personal/application data, and other
+     CineCheck-specific data.
+   - Used by both frontend and backend.
+
+Keep the responsibilities of these two databases clearly separated.
+Do not mix application data into the IMDb database.
+
+## Code Quality
+
+- Never use `any`.
+- Keep everything properly typed.
+- Prefer idiomatic, readable, maintainable code.
+- Follow the conventions already present in the project.
+- Do not introduce unnecessary abstractions.
+- Prefer simple solutions that are easy to understand and maintain.
+
+## Dependencies
+
+Do NOT install, remove, or upgrade dependencies without explicit approval.
+
+Before suggesting a new dependency, first determine whether the existing
+stack already provides a suitable solution.
+
+## Working Method
+
+Before making changes:
+
+1. Analyze the existing code and architecture.
+2. Identify the problem and its implications.
+3. Propose a plan.
+4. Explain what will be changed and why.
+5. Ask for explicit approval.
+6. Only after approval, modify the code.
+7. Verify the changes and report the result.
+
+Do not write or modify code before approval.
+
+## Important
+
+Do not assume how the project works.
+
+Inspect the existing implementation before making architectural or technical
+assumptions.
+
+When something is unclear, ask rather than inventing an implementation.
