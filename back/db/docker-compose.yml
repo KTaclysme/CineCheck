@@ -2,7 +2,7 @@ services:
   postgres_imdb:
     container_name: IMDB_Pg
     image: postgres:16
-    restart: always
+    restart: on-failure
     environment: 
       POSTGRES_PASSWORD: admin 
       POSTGRES_USER: admin
@@ -16,7 +16,7 @@ services:
   postgres_cinecheck:
     container_name: CineCheck_Pg
     image: postgres:16
-    restart: always
+    restart: on-failure
     environment: 
       POSTGRES_PASSWORD: admin 
       POSTGRES_USER: admin
