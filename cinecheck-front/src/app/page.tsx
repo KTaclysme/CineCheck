@@ -145,7 +145,7 @@ function FilmCard({
               disabled={saving}
             />
           ) : (
-            <p className="text-xs leading-5 text-zinc-500">
+            <p className="text-xs leading-5 text-zinc-500"> 
               Connectez-vous pour noter ce film.
             </p>
           )}
@@ -442,9 +442,9 @@ export default function Home() {
                   {ratedCount} film{ratedCount !== 1 ? 's' : ''} noté{ratedCount !== 1 ? 's' : ''}
                 </span>
               ) : (
-                <span className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2">
+                <a href="/login" className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 transition-colors hover:border-white/20 hover:bg-white/[0.08] hover:text-white">
                   Connectez-vous pour noter
-                </span>
+                </a>
               )}
             </div>
           </div>

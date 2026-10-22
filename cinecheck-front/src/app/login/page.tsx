@@ -50,9 +50,6 @@ export default function LoginPage() {
 
         <section className="rounded-2xl border border-white/10 bg-[#141416]/95 p-7 shadow-2xl shadow-black/40 sm:p-9">
           <div className="mb-7">
-            <p className="mb-2 text-xs font-bold uppercase tracking-[0.25em] text-amber-400">
-              Heureux de te revoir
-            </p>
             <h1 className="text-3xl font-bold tracking-tight">Connexion</h1>
             <p className="mt-2 text-sm leading-6 text-zinc-400">
               Retrouve tes films, tes notes et ta collection personnelle.
@@ -68,7 +65,7 @@ export default function LoginPage() {
                 id="login-email"
                 type="email"
                 autoComplete="email"
-                placeholder="toi@exemple.com"
+                placeholder="mail@exemple.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full rounded-xl border border-white/10 bg-[#09090b] px-4 py-3 text-white outline-none transition placeholder:text-zinc-600 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/10"
@@ -120,10 +117,6 @@ export default function LoginPage() {
             </Link>
           </p>
         </section>
-
-        <p className="mt-6 text-center text-xs text-zinc-600">
-          Le cinéma, à ton image.
-        </p>
       </div>
     </main>
   )

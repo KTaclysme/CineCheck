@@ -9,12 +9,14 @@ export default function HeaderGuest(){
             <Link href="/" className="font-semibold text-zinc-900 dark:text-zinc-100">
               CineCheck
             </Link>
-            <Link href="/login" className="text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100">
-              Connexion
-            </Link>
-            <Link href="/signup" className="text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100">
-              Inscription
-            </Link>
+            <div className="ml-auto flex items-center gap-4 text-sm">  
+              <Link href="/login" className="text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100">
+                Connexion
+              </Link>
+              <Link href="/signup" className="text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100">
+                Inscription
+              </Link>
+            </div>
           </nav>
   );
 }

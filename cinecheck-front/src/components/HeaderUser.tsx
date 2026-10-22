@@ -9,9 +9,11 @@ export default function HeaderUser() {
             <Link href="/" className="font-semibold text-zinc-900 dark:text-zinc-100">
               CineCheck
             </Link>
-            <Link href="/profile" className="text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100">
-              Profil
-            </Link>
+            <div className="ml-auto flex items-center gap-4 text-sm">
+              <Link href="/profile" className="ml-auto text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100">
+                Profil
+              </Link>
+            </div>
           </nav>
   );
 }

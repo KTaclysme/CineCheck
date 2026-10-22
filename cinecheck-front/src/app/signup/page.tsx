@@ -62,15 +62,9 @@ export default function SignUpPage() {
 
         <section className="rounded-2xl border border-white/10 bg-[#141416]/95 p-7 shadow-2xl shadow-black/40 sm:p-9">
           <div className="mb-7">
-            <p className="mb-2 text-xs font-bold uppercase tracking-[0.25em] text-amber-400">
-              Rejoins la communauté
-            </p>
             <h1 className="text-3xl font-bold tracking-tight">
               Créer un compte
             </h1>
-            <p className="mt-2 text-sm leading-6 text-zinc-400">
-              Garde une trace de tes films et construis ta propre collection.
-            </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -147,9 +141,6 @@ export default function SignUpPage() {
           </p>
         </section>
 
-        <p className="mt-6 text-center text-xs text-zinc-600">
-          Ton prochain film préféré est peut-être juste ici.
-        </p>
       </div>
     </main>
   );
