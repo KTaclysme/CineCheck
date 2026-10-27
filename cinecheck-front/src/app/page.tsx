@@ -216,16 +216,50 @@ export default function Home() {
   const [search, setSearch] = useState('');
   const [savingId, setSavingId] = useState<string | null>(null);
   const [notice, setNotice] = useState('');
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  async function loadMoreFilms() {
+    if (loadingMore || !hasMore) return;
+
+    setLoadingMore(true);
+
+    try {
+      const nextPage = page + 1;
+
+      const response = await axios.get(
+        `${API_URL}/films?page=${nextPage}&limit=20`,
+      );
+
+      const newFilms: Film[] = response.data.data ?? [];
+
+      setFilms((previous) => {
+        const existingIds = new Set(previous.map((film) => film.id));
+        return [...previous, ...newFilms.filter((film) => !existingIds.has(film.id))];
+      });
+
+      setPage(nextPage);
+      setHasMore(response.data.hasMore ?? false);
+    } catch (err) {
+      console.error('Erreur de chargement des films :', err);
+      setNotice('Impossible de charger plus de films. Réessayez.');
+    } finally {
+      setLoadingMore(false);
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
 
     async function fetchData() {
       try {
-        const filmsResponse = await axios.get(`${API_URL}/films`);
-        if (cancelled) return;
+          const filmsResponse = await axios.get(`${API_URL}/films?page=1&limit=20`);
+          if (cancelled) return;
 
-        setFilms(filmsResponse.data.data ?? []);
+          setFilms(filmsResponse.data.data ?? []);
+          setPage(1);
+          setHasMore(filmsResponse.data.hasMore ?? false);
 
         try {
           await axios.get(`${API_URL}/auth/profile`, {
@@ -314,30 +348,20 @@ export default function Home() {
     });
   }, [films, search]);
 
-  const genres = useMemo(() => {
-    const groups = new Map<string, Film[]>();
-
-    for (const film of filteredFilms) {
-      const filmGenres = film.genres
-        ?.split(',')
-        .map((genre) => genre.trim())
-        .filter(Boolean);
-
-      const uniqueGenres = filmGenres?.length
-        ? [...new Set(filmGenres)]
-        : ['Autres'];
-
-      for (const genre of uniqueGenres) {
-        if (!groups.has(genre)) groups.set(genre, []);
-        groups.get(genre)!.push(film);
-      }
-    }
-
-    return [...groups.entries()].sort(([a], [b]) => {
-      if (a === 'Autres') return 1;
-      if (b === 'Autres') return -1;
-      return a.localeCompare(b, 'fr');
-    });
+  const popularFilms = useMemo(() => {
+    return [...filteredFilms]
+      .filter(
+        (film) =>
+          film.rating != null &&
+          film.votes != null &&
+          film.votes >= 10000,
+      )
+      .sort((a, b) => {
+        const scoreA = a.rating! * Math.log10(a.votes!);
+        const scoreB = b.rating! * Math.log10(b.votes!);
+        return scoreB - scoreA;
+      })
+      .slice(0, 10);
   }, [filteredFilms]);
 
   const ratedCount = Object.values(userRatings).filter(
@@ -388,9 +412,6 @@ export default function Home() {
           <div className="pointer-events-none absolute -right-16 -top-24 h-72 w-72 rounded-full bg-amber-500/[0.10] blur-3xl" />
 
           <div className="relative max-w-3xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-amber-400">
-              Votre rendez-vous cinéma
-            </p>
 
             <h1 className="mt-5 text-4xl font-bold leading-tight tracking-tight sm:text-6xl">
               Le prochain film
@@ -468,27 +489,68 @@ export default function Home() {
         )}
 
         <div className="mt-10">
-          {genres.length > 0 ? (
-            genres.map(([genre, genreFilms]) => (
-              <FilmCarousel
-                key={genre}
-                genre={genre}
-                films={genreFilms}
-                userRatings={userRatings}
-                isLoggedIn={isLoggedIn}
-                savingId={savingId}
-                onRate={saveRating}
-              />
-            ))
+          {popularFilms.length > 0 ? (
+            <section className="mt-10">
+              <div className="mb-5">
+                <p className="text-xs font-semibold uppercase tracking-[0.25em] text-amber-400">
+                  À découvrir
+                </p>
+
+                <h2 className="mt-1 text-2xl font-bold text-white sm:text-3xl">
+                  Films populaires
+                </h2>
+
+                <p className="mt-2 text-sm text-zinc-400">
+                  Les films appréciés par les cinéphiles.
+                </p>
+              </div>
+
+              <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-4 [scrollbar-width:thin]">
+                {popularFilms.map((film) => (
+                  <div key={film.id} className="snap-start">
+                    <FilmCard
+                      film={film}
+                      userRating={userRatings[film.id] ?? null}
+                      isLoggedIn={isLoggedIn}
+                      saving={savingId === film.id}
+                      onRate={saveRating}
+                    />
+                  </div>
+                ))}
+                <a
+                  href="/films"
+                  className="group flex min-h-[280px] w-[245px] shrink-0 snap-start flex-col items-center justify-center rounded-2xl border border-dashed border-amber-400/40 bg-[#151515] p-6 text-center transition hover:border-amber-400 hover:bg-[#1b1b1b] sm:w-[270px]"
+                >
+                  <span className="flex h-14 w-14 items-center justify-center rounded-full bg-amber-400/10 text-3xl text-amber-400 transition group-hover:bg-amber-400/20">
+                    →
+                  </span>
+
+                  <h3 className="mt-5 text-lg font-semibold text-white">
+                    Voir tous les films
+                  </h3>
+
+                  <p className="mt-2 text-sm leading-5 text-zinc-400">
+                    Explorez le catalogue complet dans une grille.
+                  </p>
+
+                  <span className="mt-5 text-sm font-semibold text-amber-400">
+                    Découvrir le catalogue
+                  </span>
+                </a>
+              </div>
+            </section>
           ) : (
             <div className="rounded-2xl border border-dashed border-white/10 px-6 py-16 text-center">
               <div className="mx-auto flex justify-center text-zinc-500">
                 <FilmIcon />
               </div>
+
               <h2 className="mt-4 text-lg font-semibold">Aucun film trouvé</h2>
+
               <p className="mt-2 text-sm text-zinc-500">
                 Essayez un autre titre, un genre ou une année.
               </p>
+
               <button
                 type="button"
                 onClick={() => setSearch('')}
