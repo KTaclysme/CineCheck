@@ -116,10 +116,10 @@ export class FilmsService {
       throw new UnauthorizedException('Utilisateur non authentifié');
     }
 
+    const { tconst, personalrating } = rateFilmDto;
+
     const film = await this.moviesRepo.findOne({
-      where: {
-        id: rateFilmDto.tconst,
-      },
+      where: { id: tconst },
     });
 
     if (!film) {
@@ -127,59 +127,32 @@ export class FilmsService {
     }
 
     let rating = await this.userRatingsRepo.findOne({
-      where: {
-        userid: userId,
-        tconst: rateFilmDto.tconst,
-      },
+      where: { userid: userId, tconst },
     });
 
-    /*
-     * Pas encore de notation
-     * + une note envoyée
-     */
-    if (!rating && rateFilmDto.personalrating) {
+    if (!rating && personalrating == null) {
+      return null;
+    }
+
+    if (!rating) {
       rating = this.userRatingsRepo.create({
         userid: userId,
-        tconst: rateFilmDto.tconst,
-        personalrating: rateFilmDto.personalrating,
+        tconst,
+        personalrating,
         watched: true,
         favorite: false,
       });
+    } else {
+      if (personalrating !== undefined) {
+        rating.personalrating = personalrating;
+      }
 
-      return this.userRatingsRepo.save(rating);
+      if (personalrating != null) {
+        rating.watched = true;
+      }
     }
 
-    /*
-     * Notation existante
-     * + note envoyée
-     *
-     * => modification
-     */
-    if (rating && rateFilmDto.personalrating) {
-      rating.personalrating = rateFilmDto.personalrating;
-      rating.watched = true;
-
-      return this.userRatingsRepo.save(rating);
-    }
-
-    /*
-     * Notation existante
-     * + note = 0 / null
-     *
-     * => suppression de la note
-     */
-    if (rating && !rateFilmDto.personalrating) {
-      rating.personalrating = null;
-      rating.watched = false;
-      rating.favorite = false;
-
-      return this.userRatingsRepo.save(rating);
-    }
-
-    /*
-     * Aucun rating et aucune note
-     */
-    return null;
+    return this.userRatingsRepo.save(rating);
   }
 
   async removeUserRating(userId: number, tconst?: string) {
