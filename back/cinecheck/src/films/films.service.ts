@@ -36,22 +36,23 @@ export class FilmsService {
     return this.userRatingsRepo.save(userFilm);
   }
 
-  async findAll(page: number = 1, limit: number = 20) {
-    const skip = (page - 1) * limit;
-
-    const data = await this.moviesRepo.find({
-      skip,
-      take: limit,
-      order: {
-        votes: 'DESC',
-      },
-    });
+  async findAll(page = 1, limit = 20) {
+    const [data, total] = await this.moviesRepo
+      .createQueryBuilder('film')
+      .where('film.rating IS NOT NULL')
+      .andWhere('film.votes >= :minVotes', { minVotes: 10000 })
+      .orderBy('film.rating', 'DESC')
+      .addOrderBy('film.votes', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
 
     return {
       data,
       page,
       limit,
-      hasMore: data.length === limit,
+      total,
+      hasMore: page * limit < total,
     };
   }
 
