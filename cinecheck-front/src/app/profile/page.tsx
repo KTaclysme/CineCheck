@@ -234,77 +234,33 @@ export default function ProfilePage() {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
 
-  useEffect(() => {
+  
+useEffect(() => {
     let cancelled = false;
 
     async function fetchProfile() {
       try {
-        const userResponse = await axios.get<User>(
-          'http://localhost:3000/auth/profile',
-          { withCredentials: true },
-        );
+        const [userResponse, libraryResponse] = await Promise.all([
+          axios.get<User>(
+            'http://localhost:3000/auth/profile',
+            { withCredentials: true },
+          ),
+          axios.get<Film[]>(
+            'http://localhost:3000/films/my-library',
+            { withCredentials: true },
+          ),
+        ]);
 
         if (cancelled) return;
 
-        const currentUser = userResponse.data;
-        setUser(currentUser);
-
-        if (currentUser.id == null) {
-          throw new Error('ID utilisateur introuvable');
-        }
-
-        const filmsResponse = await axios.get(
-          'http://localhost:3000/films',
-        );
-
-        const allFilms: Film[] = filmsResponse.data.data;
-
-        const filmsWithRatings = await Promise.all(
-          allFilms.map(async (film) => {
-            try {
-              const response = await axios.get(
-                `http://localhost:3000/films/${film.id}/user-rating`,
-                {
-                  params: { userId: currentUser.id },
-                  withCredentials: true,
-                },
-              );
-
-              const data = response.data;
-
-              return {
-                ...film,
-                myRating: data.hasRating
-                  ? data.personalrating
-                  : null,
-                watchedByMe: data.hasRating,
-              };
-            } catch (error) {
-              console.error(
-                `Erreur de récupération de la note du film ${film.id}:`,
-                error,
-              );
-
-              return {
-                ...film,
-                myRating: null,
-                watchedByMe: false,
-              };
-            }
-          }),
-        );
-
-        if (!cancelled) {
-          setMyFilms(filmsWithRatings);
-        }
+        setUser(userResponse.data);
+        setMyFilms(libraryResponse.data ?? []);
       } catch (error) {
         if (!cancelled) {
           console.error('Erreur de chargement du profil :', error);
         }
       } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
+        if (!cancelled) setLoading(false);
       }
     }
 
@@ -351,17 +307,23 @@ export default function ProfilePage() {
   };
 
   const ratedFilms = useMemo(
-    () => myFilms.filter((film) => film.myRating != null && film.myRating > 0),
+    () =>
+      myFilms.filter(
+        (film) =>
+          film.myRating != null &&
+          Number(film.myRating) > 0,
+      ),
     [myFilms],
   );
 
-  const averageRating =
-    ratedFilms.length > 0
-      ? (
-          ratedFilms.reduce((sum, film) => sum + (film.myRating ?? 0), 0) /
-          ratedFilms.length
-        ).toFixed(1)
-      : '—';
+  const averageRating = ratedFilms.length > 0
+    ? (
+        ratedFilms.reduce(
+          (sum, film) => sum + Number(film.myRating),
+          0,
+        ) / ratedFilms.length
+      ).toFixed(1)
+    : '—';
 
   const filteredFilms = useMemo(() => {
     const query = search.trim().toLocaleLowerCase('fr');
@@ -382,6 +344,64 @@ export default function ProfilePage() {
       return matchesSearch && matchesFilter;
     });
   }, [myFilms, search, filter]);
+
+  const watchedFilms = useMemo(
+    () => myFilms.filter((film) => film.watchedByMe),
+    [myFilms],
+  );
+
+  const genreStats = useMemo(() => {
+    const genres = new Map<
+      string,
+      { watched: number; ratings: number[] }
+    >();
+
+    for (const film of watchedFilms) {
+      const filmGenres = [
+        ...new Set(
+          (film.genres ?? '')
+            .split(',')
+            .map((genre) => genre.trim())
+            .filter(Boolean),
+        ),
+      ];
+
+      const rating =
+        film.myRating != null ? Number(film.myRating) : null;
+
+      for (const genre of filmGenres) {
+        const stats = genres.get(genre) ?? {
+          watched: 0,
+          ratings: [],
+        };
+
+        stats.watched++;
+
+        if (rating !== null && Number.isFinite(rating) && rating > 0) {
+          stats.ratings.push(rating);
+        }
+
+        genres.set(genre, stats);
+      }
+    }
+
+    return Array.from(genres.entries())
+      .map(([genre, stats]) => ({
+        genre,
+        watched: stats.watched,
+        rated: stats.ratings.length,
+        average:
+          stats.ratings.length > 0
+            ? stats.ratings.reduce((sum, rating) => sum + rating, 0) /
+              stats.ratings.length
+            : null,
+      }))
+      .sort((a, b) => {
+        if (a.average == null) return 1;
+        if (b.average == null) return -1;
+        return b.average - a.average;
+      });
+  }, [watchedFilms]);
 
   if (loading) {
     return (
@@ -471,23 +491,106 @@ export default function ProfilePage() {
           className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3"
         >
           <StatCard
-            label="Dans la bibliothèque"
-            value={myFilms.length}
-            detail="Films disponibles"
+            label="Films vus"
+            value={watchedFilms.length}
+            detail="Films regardés"
             icon={<FilmIcon className="h-5 w-5" />}
           />
+
           <StatCard
             label="Films notés"
             value={ratedFilms.length}
-            detail="Vos notes personnelles"
+            detail="Notes personnelles"
             icon={<StarIcon className="h-5 w-5" />}
           />
+
           <StatCard
             label="Note moyenne"
-            value={averageRating === '—' ? '—' : `${averageRating}/5`}
-            detail="Sur vos films notés"
+            value={averageRating === '—' ? '—' : `${averageRating}/5`} //
+            detail="Moyenne de tes notes"
             icon={<span className="text-lg font-bold">★</span>}
           />
+        </section>
+
+        <section className="mt-12 grid grid-cols-1 gap-6 xl:grid-cols-2">
+          <div className="rounded-2xl border border-white/10 bg-[#141414] p-4 sm:p-5 overflow-y-auto scrollbar-subtle max-h-80">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-400">
+              Vos habitudes
+            </p>
+            <h2 className="mt-2 text-xl font-bold">Films vus par genre</h2>
+
+            <div className="mt-6 space-y-5">
+              {genreStats.length ? genreStats.map((stat) => {
+                const max = Math.max(
+                  ...genreStats.map((item) => item.watched),
+                  1,
+                );
+
+                return (
+                  <div key={stat.genre}>
+                    <div className="mb-2 flex justify-between gap-3 text-sm">
+                      <span className="text-zinc-200">{stat.genre}</span>
+                      <span className="text-zinc-400">
+                        {stat.watched} film{stat.watched > 1 ? 's' : ''}
+                      </span>
+                    </div>
+
+                    <div className="h-2 overflow-hidden rounded-full bg-white/10">
+                      <div
+                        className="h-full rounded-full bg-amber-400"
+                        style={{
+                          width: `${(stat.watched / max) * 100}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                );
+              }) : (
+                <p className="text-sm text-zinc-500">
+                  Aucun film vu à analyser pour le moment.
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-white/10 bg-[#141414] p-4 sm:p-5 overflow-y-auto scrollbar-subtle max-h-80">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-400">
+              Vos préférences
+            </p>
+            <h2 className="mt-2 text-xl font-bold">Notes moyennes par genre</h2>
+
+            <div className="mt-6 space-y-4">
+              {genreStats.filter((stat) => stat.average != null)
+                .sort((a, b) => (b.average ?? 0) - (a.average ?? 0))
+                .map((stat) => (
+                  <div
+                    key={stat.genre}
+                    className="flex items-center justify-between gap-3 rounded-xl bg-white/[0.03] p-3"
+                  >
+                    <div>
+                      <p className="text-sm font-medium text-white">
+                        {stat.genre}
+                      </p>
+                      <p className="mt-1 text-xs text-zinc-500">
+                        {stat.rated} film{stat.rated > 1 ? 's' : ''} noté{stat.rated > 1 ? 's' : ''}
+                      </p>
+                    </div>
+
+                    <div className="flex shrink-0 items-center gap-1.5 font-semibold text-amber-400">
+                      <StarIcon className="h-4 w-4" />
+                      {stat.average == null ? 'Pas encore noté' : `${stat.average.toFixed(1)}/5`}
+                      <span className="text-xs font-normal text-zinc-500">/5</span>
+                    </div>
+                  </div>
+                ))}
+
+              {!genreStats.some((stat) => stat.average != null) && (
+                <p className="text-sm text-zinc-500">
+                  Note quelques films pour découvrir tes genres préférés.
+                </p>
+              )}
+            </div>
+          </div>
         </section>
 
         <section className="mt-12">
