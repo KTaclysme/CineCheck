@@ -4,7 +4,7 @@ import { UpdateFilmDto } from './dto/update-film.dto';
 import { RateFilmDto } from './dto/rate-film.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Movies, UserRatings } from './entities/film.entity';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 
 @Injectable()
 export class FilmsService {
@@ -248,5 +248,45 @@ export class FilmsService {
     return {
       deleted: true,
     };
+  }
+
+  async getMyLibrary(userId: number) {
+    if (!userId) {
+      throw new UnauthorizedException('Utilisateur non authentifié');
+    }
+
+    const userRatings = await this.userRatingsRepo.find({
+      where: { userid: userId },
+    });
+
+    const watchedRatings = userRatings.filter(
+      (item) => item.watched || item.personalrating != null,
+    );
+
+    if (watchedRatings.length === 0) {
+      return [];
+    }
+
+    const filmIds = [
+      ...new Set(watchedRatings.map((item) => item.tconst)),
+    ];
+
+    const movies = await this.moviesRepo.find({
+      where: { id: In(filmIds) },
+    });
+
+    const ratingsById = new Map(
+      watchedRatings.map((item) => [item.tconst, item]),
+    );
+
+    return movies.map((movie) => {
+      const personal = ratingsById.get(movie.id);
+
+      return {
+        ...movie,
+        myRating: personal?.personalrating ?? null,
+        watchedByMe: personal?.watched ?? false,
+      };
+    });
   }
 }

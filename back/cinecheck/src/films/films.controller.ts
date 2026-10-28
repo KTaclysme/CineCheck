@@ -20,6 +20,11 @@ export class FilmsController {
     return this.filmsService.findAll(page, limit);
   }
 
+  @UseGuards(AuthGuard)
+  @Get('my-library')
+  getMyLibrary(@Request() req: any) {
+    return this.filmsService.getMyLibrary(req.user?.id);
+  }
   
   @UseGuards(AuthGuard)
   @Get('my-ratings')
