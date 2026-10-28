@@ -25,15 +25,7 @@ export class FilmsService {
       throw new NotFoundException('Film introuvable');
     }
 
-    const userFilm = this.userRatingsRepo.create({
-      userid: createFilmDto.id,
-      tconst: createFilmDto.tconst,
-      personalrating: createFilmDto.personalrating ?? null,
-      watched: createFilmDto.watched ?? false,
-      favorite: createFilmDto.favorite ?? false,
-    });
-
-    return this.userRatingsRepo.save(userFilm);
+    return this.userRatingsRepo.save(createFilmDto);
   }
 
   async findAll(page = 1, limit = 20) {
