@@ -254,40 +254,61 @@ export default function Home() {
 
     async function fetchData() {
       try {
-          const filmsResponse = await axios.get(`${API_URL}/films?page=1&limit=20`);
-          if (cancelled) return;
+        const filmsResponse = await axios.get(
+          `${API_URL}/films?page=1&limit=20`,
+        );
 
-          setFilms(filmsResponse.data.data ?? []);
-          setPage(1);
-          setHasMore(filmsResponse.data.hasMore ?? false);
+        if (cancelled) return;
+
+        setFilms(filmsResponse.data.data ?? []);
+        setPage(1);
+        setHasMore(filmsResponse.data.hasMore ?? false);
+      } catch (err) {
+        console.error('Erreur de chargement des films :', err);
+
+        if (!cancelled) {
+          setError(
+            'Impossible de charger les films. Vérifiez que le serveur est disponible.',
+          );
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+
+      if (cancelled) return;
+
+      try {
+        await axios.get(`${API_URL}/auth/profile`, {
+          withCredentials: true,
+        });
+
+        if (cancelled) return;
+        setIsLoggedIn(true);
 
         try {
-          await axios.get(`${API_URL}/auth/profile`, {
-            withCredentials: true,
-          });
-
           const ratingsResponse = await axios.get(
             `${API_URL}/films/my-ratings`,
             { withCredentials: true },
           );
 
-          if (cancelled) return;
+          console.log('Notes récupérées depuis la DB :', ratingsResponse.data);
 
-          setIsLoggedIn(true);
+
+          if (cancelled) return;
           setUserRatings(ratingsResponse.data ?? {});
-        } catch {
-          if (cancelled) return;
+        } catch (err) {
+          console.error('Erreur de chargement des notes :', err);
 
-          setIsLoggedIn(false);
-          setUserRatings({});
+          if (!cancelled) {
+            setUserRatings({});
+          }
         }
       } catch (err) {
-        console.error('Erreur de chargement des films :', err);
-        if (!cancelled) {
-          setError('Impossible de charger les films. Vérifiez que le serveur est disponible.');
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
+        if (cancelled) return;
+
+        console.error('Utilisateur non authentifié :', err);
+        setIsLoggedIn(false);
+        setUserRatings({});
       }
     }
 
@@ -314,7 +335,7 @@ export default function Home() {
         `${API_URL}/films/rate`,
         {
           tconst: filmId,
-          rating,
+          personalrating: rating,
           watched: true,
         },
         { withCredentials: true },

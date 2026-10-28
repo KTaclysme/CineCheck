@@ -20,18 +20,25 @@ export class FilmsController {
     return this.filmsService.findAll(page, limit);
   }
 
+  
+  @UseGuards(AuthGuard)
+  @Get('my-ratings')
+  getMyRatings(@Request() req: any) {
+    return this.filmsService.getMyRatings(req.user?.id);
+  }
+  
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.filmsService.findOne(id);
   }
-
+  
   @UseGuards(AuthGuard)
   @Get(':tconst/user-rating')
   getUserRating(
-    @Param('tconst') tconst: string, 
-    @Query('userId', new DefaultValuePipe(null), ParseIntPipe) userId?: number | null
+    @Request() req: any,
+    @Param('tconst') tconst: string,
   ) {
-    return this.filmsService.getUserRating(tconst, userId);
+    return this.filmsService.getUserRating(tconst, req.user?.id);
   }
 
   @UseGuards(AuthGuard)

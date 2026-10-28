@@ -5,6 +5,7 @@ import {
   IsOptional,
   Min,
   Max,
+  IsBoolean,
 } from 'class-validator';
 
 export class RateFilmDto {
@@ -17,4 +18,7 @@ export class RateFilmDto {
   @Min(1)
   @Max(5)
   personalrating?: number | null;
+
+  @IsBoolean()
+  watched: boolean;
 }

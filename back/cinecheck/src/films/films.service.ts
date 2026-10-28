@@ -69,10 +69,29 @@ export class FilmsService {
     });
 
     if (!film) {
+      console.log("bite1")
       throw new NotFoundException('Film introuvable');
     }
 
     return film;
+  }
+
+  async getMyRatings(userId: number) {
+    if (!userId) {
+      throw new UnauthorizedException('Utilisateur non authentifié');
+    }
+
+    const ratings = await this.userRatingsRepo.find({
+      where: { userid: userId },
+    });
+
+    return ratings.reduce((result, rating) => {
+      if (rating.personalrating != null) {
+        result[rating.tconst] = rating.personalrating;
+      }
+
+      return result;
+    }, {} as Record<string, number>);
   }
 
   async getUserRating(tconst: string, userId: number) {
@@ -80,25 +99,24 @@ export class FilmsService {
       throw new UnauthorizedException('Utilisateur non authentifié');
     }
 
+    console.log("alaide1")
     const film = await this.moviesRepo.findOne({
       where: { id: tconst },
     });
 
     if (!film) {
+      console.log("bite")
       throw new NotFoundException('Film introuvable');
     }
 
     const rating = await this.userRatingsRepo.findOne({
-      where: {
-        userid: userId,
-        tconst,
-      },
+      where: { userid: userId, tconst },
     });
 
     return {
       movie: film,
       rating,
-      hasRating: !!rating?.personalrating,
+      hasRating: rating?.personalrating != null,
     };
   }
 
@@ -111,11 +129,13 @@ export class FilmsService {
 
     const { tconst, personalrating } = rateFilmDto;
 
+    console.log("alaide")
     const film = await this.moviesRepo.findOne({
       where: { id: tconst },
     });
 
     if (!film) {
+      console.log("bite3")
       throw new NotFoundException('Film introuvable');
     }
 
@@ -144,7 +164,7 @@ export class FilmsService {
         rating.watched = true;
       }
     }
-
+    console.log("c'est save", rating)
     return this.userRatingsRepo.save(rating);
   }
 
@@ -203,41 +223,6 @@ export class FilmsService {
     );
 
     return results.filter((entry) => entry.movie);
-  }
-
-  async getMyRatings(userId: number) {
-    if (!userId) {
-      throw new UnauthorizedException(
-        'Utilisateur non authentifié',
-      );
-    }
-
-    const ratings = await this.userRatingsRepo.find({
-      where: {
-        userid: userId,
-      },
-    });
-
-    const results = await Promise.all(
-      ratings.map(async (rating) => {
-        const movie = await this.moviesRepo.findOne({
-          where: {
-            id: rating.tconst,
-          },
-        });
-
-        if (!movie) {
-          return null;
-        }
-
-        return {
-          ...movie,
-          personalrating: rating.personalrating,
-        };
-      }),
-    );
-
-    return results.filter(Boolean);
   }
 
   async update(id: number, updateFilmDto: UpdateFilmDto) {
