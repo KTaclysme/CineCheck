@@ -5,7 +5,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Users } from './entities/user.entity';
 import * as bcrypt from 'bcrypt';
-import { emit } from 'process';
 
 @Injectable()
 export class UsersService {
@@ -20,7 +19,6 @@ export class UsersService {
     if (existingUser) {
       throw new ConflictException('Adresse mail déjà existante');
     }
-    console.log({email : createUserDto.email}, {pword : createUserDto.pword})
     const hashedPassword = await bcrypt.hash(createUserDto.pword, 10);
     const user = this.usersRepo.create({
       email: createUserDto.email,

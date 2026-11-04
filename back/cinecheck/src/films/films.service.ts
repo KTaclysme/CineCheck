@@ -69,7 +69,6 @@ export class FilmsService {
     });
 
     if (!film) {
-      console.log("bite1")
       throw new NotFoundException('Film introuvable');
     }
 
@@ -99,13 +98,11 @@ export class FilmsService {
       throw new UnauthorizedException('Utilisateur non authentifié');
     }
 
-    console.log("alaide1")
     const film = await this.moviesRepo.findOne({
       where: { id: tconst },
     });
 
     if (!film) {
-      console.log("bite")
       throw new NotFoundException('Film introuvable');
     }
 
@@ -129,13 +126,11 @@ export class FilmsService {
 
     const { tconst, personalrating } = rateFilmDto;
 
-    console.log("alaide")
     const film = await this.moviesRepo.findOne({
       where: { id: tconst },
     });
 
     if (!film) {
-      console.log("bite3")
       throw new NotFoundException('Film introuvable');
     }
 
@@ -164,7 +159,6 @@ export class FilmsService {
         rating.watched = true;
       }
     }
-    console.log("c'est save", rating)
     return this.userRatingsRepo.save(rating);
   }
 

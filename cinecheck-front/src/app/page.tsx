@@ -155,58 +155,6 @@ function FilmCard({
   );
 }
 
-function FilmCarousel({
-  genre,
-  films,
-  userRatings,
-  isLoggedIn,
-  savingId,
-  onRate,
-}: {
-  genre: string;
-  films: Film[];
-  userRatings: Record<string, number>;
-  isLoggedIn: boolean;
-  savingId: string | null;
-  onRate: (id: string, rating: number) => void;
-}) {
-  return (
-    <section className="mt-10 first:mt-0">
-      <div className="mb-4 flex items-end justify-between gap-4">
-        <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-amber-400">
-            Explorer par genre
-          </p>
-          <h2 className="mt-1 text-xl font-bold tracking-tight text-white sm:text-2xl">
-            {genre}
-          </h2>
-        </div>
-
-        <span className="shrink-0 text-xs text-zinc-500">
-          {films.length} film{films.length > 1 ? 's' : ''}
-        </span>
-      </div>
-
-      <div
-        className="flex gap-4 overflow-x-auto overflow-y-hidden pb-4 [scrollbar-color:#454545_transparent] [scrollbar-width:thin] snap-x snap-mandatory"
-        aria-label={`Films du genre ${genre}`}
-      >
-        {films.map((film) => (
-          <div key={film.id} className="snap-start">
-            <FilmCard
-              film={film}
-              userRating={userRatings[film.id] ?? null}
-              isLoggedIn={isLoggedIn}
-              saving={savingId === film.id}
-              onRate={onRate}
-            />
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
 export default function Home() {
   const [films, setFilms] = useState<Film[]>([]);
   const [userRatings, setUserRatings] = useState<Record<string, number>>({});
@@ -218,36 +166,6 @@ export default function Home() {
   const [notice, setNotice] = useState('');
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
-
-  async function loadMoreFilms() {
-    if (loadingMore || !hasMore) return;
-
-    setLoadingMore(true);
-
-    try {
-      const nextPage = page + 1;
-
-      const response = await axios.get(
-        `${API_URL}/films?page=${nextPage}&limit=20`,
-      );
-
-      const newFilms: Film[] = response.data.data ?? [];
-
-      setFilms((previous) => {
-        const existingIds = new Set(previous.map((film) => film.id));
-        return [...previous, ...newFilms.filter((film) => !existingIds.has(film.id))];
-      });
-
-      setPage(nextPage);
-      setHasMore(response.data.hasMore ?? false);
-    } catch (err) {
-      console.error('Erreur de chargement des films :', err);
-      setNotice('Impossible de charger plus de films. Réessayez.');
-    } finally {
-      setLoadingMore(false);
-    }
-  }
 
   useEffect(() => {
     let cancelled = false;
@@ -290,9 +208,6 @@ export default function Home() {
             `${API_URL}/films/my-ratings`,
             { withCredentials: true },
           );
-
-          console.log('Notes récupérées depuis la DB :', ratingsResponse.data);
-
 
           if (cancelled) return;
           setUserRatings(ratingsResponse.data ?? {});
